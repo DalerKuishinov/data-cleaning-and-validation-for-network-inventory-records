@@ -148,56 +148,56 @@ class DataRgent:
         parts = ip.split(".")
         return f"{parts[3]}.{parts[2]}.{parts[1]}.{parts[0]}.in-addr.arpa"
     
+    # Main Processing
+    def process(self, input_csv, output_csv, anomalies_json):
+        # Main Processing pipeline
+        print(f"Processing {input_csv}...")
 
-def process(input_csv, out_csv, anomalies_json):
-    anomalies = []
-    with open(input_csv, newline="") as f, open(out_csv, "w", newline="") as g:
-        reader = csv.DictReader(f)
-        fieldnames = [
-            "ip","ip_valid","ip_version","subnet_cidr","normalization_steps","source_row_id"
-        ] + [c for c in reader.fieldnames if c not in ("ip","source_row_id")]
-        writer = csv.DictWriter(g, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in reader:
-            raw_ip = row.get("ip","")
-            valid, canonical, reason = ipv4_validate_and_normalize(raw_ip)
-            steps = []
-            steps.append("ip_trim")
-            if reason == "ok":
-                steps.append("ip_parse")
-                steps.append("ip_normalize")
-                ip_out = canonical
-                ip_valid = "true"
-                ip_version = "4"
-                subnet = default_subnet(ip_out)
-            else:
-                # keep original as-is, flag invalid
-                ip_out = str(raw_ip).strip()
-                ip_valid = "false"
-                ip_version = ""
-                subnet = ""
-                anomalies.append({
-                    "source_row_id": row.get("source_row_id"),
-                    "issues": [{"field":"ip","type": reason, "value": raw_ip}],
-                    "recommended_actions": ["Correct IP or mark record for review"]
+        with open(input_csv, 'r', newline='') as f:
+            reader = csv.DictReader(f)
+            raw_records = list(reader)
+
+        self.stats['total_records'] = len(raw_records)
+
+        processed_records = []
+        ambigious_records = []
+
+        for row in raw_records:
+            record = self.process_record_deterministic(row)
+            processed_records.append(record)
+
+            if record['needs_ai_classification']:
+                ambigious_records.append({
+                    'index': len(processed_records) - 1,
+                    'hostname': record['hostname'],
+                    'device_type': row.get('device_type', ''),
+                    'notes': row.get('notes', ''),
+                    'ip': record['ip']
                 })
-                # add a specific step for the reason
-                steps.append(f"ip_invalid_{reason}")
-            out_row = {
-                "ip": ip_out,
-                "ip_valid": ip_valid,
-                "ip_version": ip_version,
-                "subnet_cidr": subnet,
-                "normalization_steps": "|".join(steps),
-                "source_row_id": row.get("source_row_id")
-            }
-            # pass-through other fields
-            for k,v in row.items():
-                if k not in ("ip","source_row_id"):
-                    out_row[k] = v
-            writer.writerow(out_row)
-    with open(anomalies_json, "w") as h:
-        json.dump(anomalies, h, indent=2)
+
+        if ambigious_records:
+            print(f"  Using AI to classify {len(ambigious_records)} ambiguous device types...")
+            classifications = self.classify_device_type_with_ai(ambigious_records)
+            
+            for amb_record, classification in zip(ambigious_records, classifications):
+                idx = amb_record['index']
+                processed_records[idx]['device_type'] = classification['device_type']
+                processed_records[idx]['device_type_confidence'] = classification['device_type_confidence']
+        
+        self._write_output(processed_records, output_csv, anomalies_json)
+        
+        print(f"Processing complete!")
+        print(f"Total records: {self.stats['total_records']}")
+        print(f"Anomalies detected: {self.stats['anomalies_detected']}")
+        print(f"AI API calls: {self.stats['ai_calls']}")
+        print(f"Output: {output_csv}")
+        print(f"Anomalies: {anomalies_json}")
+
+    def process_record_deterministic(self, row):
+
+    def classify_device_type_with_ai(self, records):
+
+        
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -208,7 +208,7 @@ if __name__ == "__main__":
     anomalies_json = "anomalies.json"
 
     if not Path(input_csv).exists():
-        print(f"Error: Input file "{input_csv}" not found.")
+        print(f"Error: Input file '{input_csv}' not found.")
         sys.exit(1)
 
     dataRgent = DataRgent(ai=True)
