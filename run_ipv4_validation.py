@@ -194,8 +194,27 @@ class DataRgent:
         print(f"Anomalies: {anomalies_json}")
 
     def process_record_deterministic(self, row):
+        # Process a single record with deterministic rules
+        source_row_id = row.get('source_row_id', '') # Return empty string if can't find
+        steps = []
 
-    def classify_device_type_with_ai(self, records):
+        raw_ip = row.get('ip', '')
+        ip_result = self.validate_ip(raw_ip)
+        steps.append('ip_validation')
+        if not ip_result['valid']:
+            self.add_anomaly(source_row_id, 'ip', ip_result['reason'], raw_ip)
+
+        return {
+            'source_row_id': source_row_id,
+            'ip': ip_result['normalized'],
+            'ip_valid': 'true' if ip_result['valid'] else 'false',
+            'ip_version': ip_result['version'],
+            'subnet_cidr': ip_result['subnet_cidr'],
+            'reverse_ptr': ip_result['reverse_ptr'],
+        }
+
+
+    # def classify_device_type_with_ai(self, records):
 
         
 
