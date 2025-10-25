@@ -1,0 +1,93 @@
+[
+  {
+    "source_row_id": "2",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "octet_out_of_range",
+        "value": "10.0.1.300"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  },
+  {
+    "source_row_id": "3",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "wrong_part_count",
+        "value": "10.0.1"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  },
+  {
+    "source_row_id": "4",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "wrong_part_count",
+        "value": "10.0.1.1.2"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  },
+  {
+    "source_row_id": "5",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "ipv6_or_non_ipv4",
+        "value": "fe80::1%eth0"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  },
+  {
+    "source_row_id": "9",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "non_numeric_or_negative",
+        "value": "abc.def.ghi.jkl"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  },
+  {
+    "source_row_id": "10",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "non_numeric_or_negative",
+        "value": "192.168.1.-1"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  },
+  {
+    "source_row_id": "15",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "wrong_part_count",
+        "value": "N/A"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP or mark record for review"
+    ]
+  }
+]

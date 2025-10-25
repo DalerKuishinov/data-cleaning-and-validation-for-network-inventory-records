@@ -1,0 +1,16 @@
+ip,ip_valid,ip_version,subnet_cidr,normalization_steps,source_row_id,hostname,fqdn,mac,owner,device_type,site,notes
+192.168.10.5,true,4,192.168.10.0/24,ip_trim|ip_parse|ip_normalize,1,HOST01,,AA-BB-CC-DD-EE-FF,priya (platform) priya@corp.example.com,server,BLR Campus,db host
+10.0.1.300,false,,,ip_trim|ip_invalid_octet_out_of_range,2,host-02,host-02.local,11-22-33-44-55-66,ops,,HQ Bldg 1,edge gw?
+10.0.1,false,,,ip_trim|ip_invalid_wrong_part_count,3,host03,,aabb.ccdd.eeff,jane@corp.example.com,switch,HQ-BUILDING-1,
+10.0.1.1.2,false,,,ip_trim|ip_invalid_wrong_part_count,4,printer-01,,00:11:22:33:44:55,Facilities,printer,HQ,
+fe80::1%eth0,false,,,ip_trim|ip_invalid_ipv6_or_non_ipv4,5,iot-cam01,,00:aa:bb:cc:dd:ee,sec,iot,Lab-1,camera PoE on port 3
+127.0.0.1,true,4,,ip_trim|ip_parse|ip_normalize,6,local-test,,,,,N/A,
+169.254.10.20,true,4,,ip_trim|ip_parse|ip_normalize,7,host-apipa,,,,,,
+10.10.10.10,true,4,10.10.10.0/24,ip_trim|ip_parse|ip_normalize,8,srv-10,,,platform,server,BLR campus,
+abc.def.ghi.jkl,false,,,ip_trim|ip_invalid_non_numeric_or_negative,9,badhost,,,,,,
+192.168.1.-1,false,,,ip_trim|ip_invalid_non_numeric_or_negative,10,neg,,,,,,
+192.168.1.255,true,4,192.168.1.0/24,ip_trim|ip_parse|ip_normalize,11,bcast,,,,,,Potential broadcast
+192.168.1.0,true,4,192.168.1.0/24,ip_trim|ip_parse|ip_normalize,12,netid,,,,,,Potential network id
+8.8.8.8,true,4,,ip_trim|ip_parse|ip_normalize,13,dns-google,,,,router,DC-1,
+10.10.10.10,true,4,10.10.10.0/24,ip_trim|ip_parse|ip_normalize,14,host-10,,,,server,,
+N/A,false,,,ip_trim|ip_invalid_wrong_part_count,15,missing-ip,,,,,,
