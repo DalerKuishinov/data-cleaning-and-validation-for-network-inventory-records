@@ -1,5 +1,10 @@
 # Infoblox — AI + DDI Take‑Home (Option 3: Data Cleaning via LLM)
 
+## About DataRgent
+DataRgent
+A DataRgent is a formulated and commercially sold product for cleaning that contains surfactants plus other components. DataRgents comprise surfactants as main functional components to remove hydrophobic grease or dirt by dispersing them in water.
+Source: Wikipedia
+
 ## Challenge
 Clean, normalize, and enrich `inventory_raw.csv` into a structured dataset fit for IPAM/DNS/DHCP workflows. Use deterministic rules first; use LLMs only where rules are weak. Log every prompt and explain your iterations briefly.
 
