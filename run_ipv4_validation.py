@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -147,6 +148,22 @@ class DataRgent:
         # Generate reverse DNS PTR record
         parts = ip.split(".")
         return f"{parts[3]}.{parts[2]}.{parts[1]}.{parts[0]}.in-addr.arpa"
+    
+    # MAC Validation
+
+    def validate_mac(self, mac_str):
+        # Validate and normalize MAC Address
+        if not mac_str or mac_str.strip() == "":
+            return {'valid': False, 'normalized': "", 'reason': 'missing'}
+        
+        mac_clean = mac_str.strip()
+        mac_no_separator = re.sub(r'[-:.]', '', mac_clean)
+
+        if not re.match(r'^[0-9a-fA-F]{12}$', mac_no_separator):
+            return {'valid': False, 'normalized': mac_clean, 'reason': 'invalid_format'}
+        
+        normalized = ':'.join([mac_no_separator[i:i+2].lower() for i in range(0, 12, 2)])
+        return {'valid': True, 'normalized': normalized, 'reason': 'ok'}
     
     # Main Processing
     def process(self, input_csv, output_csv, anomalies_json):
