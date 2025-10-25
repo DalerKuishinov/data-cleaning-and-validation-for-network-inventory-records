@@ -120,21 +120,21 @@ class DataRgent:
             }
         except ValueError:
             return {'valid': False, 'reason': 'invalid_ipv6'}
-
-def classify_ipv4_type(ip):
-    # Simple classification for context; not required for validity
-    o = list(map(int, ip.split(".")))
-    if o[0] == 10:
-        return "private_rfc1918"
-    if o[0] == 172 and 16 <= o[1] <= 31:
-        return "private_rfc1918"
-    if o[0] == 192 and o[1] == 168:
-        return "private_rfc1918"
-    if o[0] == 169 and o[1] == 254:
-        return "link_local_apipa"
-    if o[0] == 127:
-        return "loopback"
-    return "public_or_other"
+        
+    def classify_ipv4_type(self, ip):
+        # Simple classification for context; not required for validity
+        octets = list(map(int, ip.split('.')))
+        if octets[0] == 10:
+            return 'private_rfc1918'
+        if octets[0] == 172 and 16 <= octets[1] <= 31:
+            return 'private_rfc1918'
+        if octets[0] == 192 and octets[1] == 168:
+            return 'private_rfc1918'
+        if octets[0] == 169 and octets[1] == 254:
+            return 'link_local_apipa'
+        if octets[0] == 127:
+            return 'loopback'
+        return 'public_or_other'
     
 def default_subnet(ip):
     # Heuristic: /24 for RFC1918, else None (you can adapt this)
