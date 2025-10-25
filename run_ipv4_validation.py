@@ -3,7 +3,9 @@ import csv
 import json
 import re
 import sys
+import os
 from pathlib import Path
+from typing import Dict, List, Tuple, Optional
 
 class DataRgent:
     def __init__(self, ai: bool = True):
@@ -208,6 +210,32 @@ class DataRgent:
             consistent = fqdn.startswith(hostname_norm + '.')
         
         return {'valid': True, 'normalized': fqdn, 'consistent': consistent, 'reason': 'ok'}
+    
+    # Owner Validation
+
+    def parse_owner(self, owner_str):
+        # Parse owner field for name, email, and team
+        if not owner_str or owner_str.strip() == '':
+            return {'owner': '', 'owner_email': '', 'owner_team': ''}
+        
+        owner = owner_str.strip()
+        email = ''
+        team = ''
+        name = owner
+        
+        email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', owner)
+        if email_match:
+            email = email_match.group(0).lower()
+            name = owner.replace(email, '').strip()
+        
+        team_match = re.search(r'\(([^)]+)\)', name)
+        if team_match:
+            team = team_match.group(1).strip()
+            name = re.sub(r'\([^)]+\)', '', name).strip()
+        
+        return {'owner': name if name else owner, 'owner_email': email, 'owner_team': team}
+    
+    # Site Normalization
     
     # Main Processing
     def process(self, input_csv, output_csv, anomalies_json):
