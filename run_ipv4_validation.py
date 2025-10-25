@@ -101,6 +101,25 @@ class DataRgent:
         }
 
     def validate_ipv6(self, ip_str):
+        # Validate IPv6 address
+        if '%' in ip_str:
+            ip_part = ip_str.split('%')[0]
+        else:
+            ip_part = ip_str
+        
+        try:
+            import ipaddress
+            ip_obj = ipaddress.IPv6Address(ip_part)
+            return {
+                'valid': True,
+                'normalized': str(ip_obj),
+                'version': '6',
+                'subnet_cidr': f"{ip_obj}/64",
+                'reverse_ptr': '',
+                'reason': 'ok'
+            }
+        except ValueError:
+            return {'valid': False, 'reason': 'invalid_ipv6'}
 
 def classify_ipv4_type(ip):
     # Simple classification for context; not required for validity
