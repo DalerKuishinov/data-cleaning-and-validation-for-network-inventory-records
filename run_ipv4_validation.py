@@ -59,35 +59,48 @@ class DataRgent:
         }
     
     def validate_ipv4(self, ip_str):
+        # Validate IPv4 address
+        if ':' in ip_str:
+            return {'valid': False, 'reason': 'ipv6_format'}
+        
+        octets = ip_str.split('.')
+        if len(octets) != 4:
+            return {'valid': False, 'reason': 'wrong_octet_count', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+        
+        canonical_octets = []
+        for octet in octets:
+            if not octet:
+                return {'valid': False, 'reason': 'empty_octet', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+            
+            if not octet.lstrip('+-').isdigit():
+                return {'valid': False, 'reason': 'non_numeric_octet', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+            
+            try:
+                value = int(octet, 10)
+            except ValueError:
+                return {'valid': False, 'reason': 'invalid_number', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+            
+            if value < 0 or value > 255:
+                return {'valid': False, 'reason': 'octet_out_of_range', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+            
+            canonical_octets.append(str(value))
+
+        canonical = '.'.join(canonical_octets)
+        ip_type = self.classify_ipv4(canonical)
+        subnet = self.default_subnet_ipv4(canonical, ip_type)
+        reverse_ptr = self.generate_reverse_ptr_ipv4(canonical)
+
+        return {
+            'valid': True,
+            'normalized': canonical,
+            'version': '4',
+            'subnet_cidr': subnet,
+            'reverse_ptr': reverse_ptr,
+            'ip_type': ip_type,
+            'reason': 'ok'
+        }
 
     def validate_ipv6(self, ip_str):
-
-def ipv4_validate_and_normalize(ip_str):
-    if ip_str is None:
-        return (False, None, "missing")
-    s = str(ip_str).strip()
-    # quick reject obvious IPv6 / non-dot forms
-    if ":" in s:
-        return (False, None, "ipv6_or_non_ipv4")
-    parts = s.split(".")
-    if len(parts) != 4:
-        return (False, None, "wrong_part_count")
-    canonical_parts = []
-    for p in parts:
-        if p == "":
-            return (False, None, "empty_octet")
-        # negative or non-digit
-        if not (p.lstrip("+").isdigit() and not p.startswith("-")):
-            return (False, None, "non_numeric_or_negative")
-        try:
-            v = int(p, 10)
-        except ValueError:
-            return (False, None, "non_decimal_format")
-        if v < 0 or v > 255:
-            return (False, None, "octet_out_of_range")
-        canonical_parts.append(str(v))
-    canonical = ".".join(canonical_parts)
-    return (True, canonical, "ok")
 
 def classify_ipv4_type(ip):
     # Simple classification for context; not required for validity
