@@ -19,6 +19,49 @@ class DataRgent:
             'anomalies_detected': 0
         }
 
+    # IP Validation
+    def validate_ip(self, ip_str):
+        # Validate and normalize IP address (IPv4 and IPv6).
+        if not ip_str or ip_str.strip().upper() in ('N/A', ''):
+            return {
+                'valid': False,
+                'normalized': '',
+                'version': '',
+                'subnet_cidr': '',
+                'reverse_ptr': '',
+                'reason': 'missing'
+            }
+        
+        ip_clean = ip_str.strip()
+
+        # Try IPv4 first
+        result = self.validate_ipv4(ip_clean)
+        if result['valid'] or 'normalized' in result:
+            return result
+        
+        # Try IPv6 only if IPv4 check indicated this might be IPv6
+        if result['reason'] in ('ipv6_format'):
+            result = self.validate_ipv6(ip_clean)
+            if result['valid']:
+                return result
+            
+        # If IPv6 check went through, probably IPv4 error
+        if 'reason' in result and result['reason'] not in ('ipv6_format'):
+            return result
+        
+        return {
+            'valid': False,
+            'normalized': ip_clean,
+            'version': '',
+            'subnet_cidr': '',
+            'reverse_ptr': '',
+            'reason': 'invalid_format'
+        }
+    
+    def validate_ipv4(self, ip_str):
+
+    def validate_ipv6(self, ip_str):
+
 def ipv4_validate_and_normalize(ip_str):
     if ip_str is None:
         return (False, None, "missing")
