@@ -165,6 +165,50 @@ class DataRgent:
         normalized = ':'.join([mac_no_separator[i:i+2].lower() for i in range(0, 12, 2)])
         return {'valid': True, 'normalized': normalized, 'reason': 'ok'}
     
+    # Hostname Validation
+
+    def validate_hostname(self, hostname_str):
+        # Validate hostname according to RFC 952/1123 syntax
+        if not hostname_str or hostname_str.strip() == "":
+            return {'valid': False, 'normalized': '', 'reason': 'missing'}
+        
+        hostname = hostname_str.strip().lower()
+
+        if len(hostname) > 253:
+            return {'valid': False, 'normalized': hostname, 'reason': 'too_long'}
+        
+        labels = hostname.split('.')
+        for label in labels:
+            if not label:
+                return {'valid': False, 'normalized': hostname, 'reason': 'empty_label'}
+            if len(label) > 63:
+                return {'valid': False, 'normalized': hostname, 'reason': 'label_too_long'}
+            if not re.match(r'^[a-z0-9]([a-z0-9-]*[a-z0-9])?$', label):
+                return {'valid': False, 'normalized': hostname, 'reason': 'invalid_characters'}
+            
+        return {'valid': True, 'normalized': hostname, 'reason': 'ok'}
+    
+    def validate_fqdn(self, fqdn_str, hostname):
+        # Validate FQDN and check whether consistent with hostname
+        if not fqdn_str or fqdn_str.strip() == "":
+            return {'valid': False, 'normalized': '', 'consistent': False, 'reason': 'missing'}
+        
+        fqdn = fqdn_str.strip().lower()
+
+        if '.' not in fqdn:
+            return {'valid': False, 'normalized': fqdn, 'consistent': False, 'reason': 'not_fully_qualified'}
+        
+        hostname_check = self.validate_hostname(fqdn)
+        if not hostname_check['valid']:
+            return {'valid': False, 'normalized': fqdn, 'consistent': False, 'reason': hostname_check['reason']}
+        
+        consistent = False
+        if hostname:
+            hostname_norm = hostname.lower()
+            consistent = fqdn.startswith(hostname_norm + '.')
+        
+        return {'valid': True, 'normalized': fqdn, 'consistent': consistent, 'reason': 'ok'}
+    
     # Main Processing
     def process(self, input_csv, output_csv, anomalies_json):
         # Main Processing pipeline
