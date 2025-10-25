@@ -5,12 +5,19 @@ import sys
 from pathlib import Path
 
 class DataRgent:
-    def __init__(self, ai: bool = True)
+    def __init__(self, ai: bool = True):
         self.anomalies = []
         self.ai = ai
         self.ai_client = None
 
         # Add AI initialization here later once deterministic stuff is figured out
+        
+        # Statistics
+        self.stats = {
+            'total_records': 0,
+            'ai_calls': 0,
+            'anomalies_detected': 0
+        }
 
 def ipv4_validate_and_normalize(ip_str):
     if ip_str is None:
