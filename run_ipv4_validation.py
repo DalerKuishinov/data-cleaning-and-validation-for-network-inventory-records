@@ -14,96 +14,96 @@ class DataRgent:
         
         # Statistics
         self.stats = {
-            'total_records': 0,
-            'ai_calls': 0,
-            'anomalies_detected': 0
+            "total_records": 0,
+            "ai_calls": 0,
+            "anomalies_detected": 0
         }
 
     # IP Validation
     def validate_ip(self, ip_str):
         # Validate and normalize IP address (IPv4 and IPv6).
-        if not ip_str or ip_str.strip().upper() in ('N/A', ''):
+        if not ip_str or ip_str.strip().upper() in ("N/A", ""):
             return {
-                'valid': False,
-                'normalized': '',
-                'version': '',
-                'subnet_cidr': '',
-                'reverse_ptr': '',
-                'reason': 'missing'
+                "valid": False,
+                "normalized": "",
+                "version": "",
+                "subnet_cidr": "",
+                "reverse_ptr": "",
+                "reason": "missing"
             }
         
         ip_clean = ip_str.strip()
 
         # Try IPv4 first
         result = self.validate_ipv4(ip_clean)
-        if result['valid'] or 'normalized' in result:
+        if result["valid"] or "normalized" in result:
             return result
         
         # Try IPv6 only if IPv4 check indicated this might be IPv6
-        if result['reason'] in ('ipv6_format'):
+        if result["reason"] in ("ipv6_format"):
             result = self.validate_ipv6(ip_clean)
-            if result['valid']:
+            if result["valid"]:
                 return result
             
         # If IPv6 check went through, probably IPv4 error
-        if 'reason' in result and result['reason'] not in ('ipv6_format'):
+        if "reason" in result and result["reason"] not in ("ipv6_format"):
             return result
         
         return {
-            'valid': False,
-            'normalized': ip_clean,
-            'version': '',
-            'subnet_cidr': '',
-            'reverse_ptr': '',
-            'reason': 'invalid_format'
+            "valid": False,
+            "normalized": ip_clean,
+            "version": "",
+            "subnet_cidr": "",
+            "reverse_ptr": "",
+            "reason": "invalid_format"
         }
     
     def validate_ipv4(self, ip_str):
         # Validate IPv4 address
-        if ':' in ip_str:
-            return {'valid': False, 'reason': 'ipv6_format'}
+        if ":" in ip_str:
+            return {"valid": False, "reason": "ipv6_format"}
         
-        octets = ip_str.split('.')
+        octets = ip_str.split(".")
         if len(octets) != 4:
-            return {'valid': False, 'reason': 'wrong_octet_count', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+            return {"valid": False, "reason": "wrong_octet_count", "normalized": ip_str, "version": "", "subnet_cidr": "", "reverse_ptr": ""}
         
         canonical_octets = []
         for octet in octets:
             if not octet:
-                return {'valid': False, 'reason': 'empty_octet', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+                return {"valid": False, "reason": "empty_octet", "normalized": ip_str, "version": "", "subnet_cidr": "", "reverse_ptr": ""}
             
-            if not octet.lstrip('+-').isdigit():
-                return {'valid': False, 'reason': 'non_numeric_octet', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+            if not octet.lstrip("+-").isdigit():
+                return {"valid": False, "reason": "non_numeric_octet", "normalized": ip_str, "version": "", "subnet_cidr": "", "reverse_ptr": ""}
             
             try:
                 value = int(octet, 10)
             except ValueError:
-                return {'valid': False, 'reason': 'invalid_number', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+                return {"valid": False, "reason": "invalid_number", "normalized": ip_str, "version": "", "subnet_cidr": "", "reverse_ptr": ""}
             
             if value < 0 or value > 255:
-                return {'valid': False, 'reason': 'octet_out_of_range', 'normalized': ip_str, 'version': '', 'subnet_cidr': '', 'reverse_ptr': ''}
+                return {"valid": False, "reason": "octet_out_of_range", "normalized": ip_str, "version": "", "subnet_cidr": "", "reverse_ptr": ""}
             
             canonical_octets.append(str(value))
 
-        canonical = '.'.join(canonical_octets)
+        canonical = ".".join(canonical_octets)
         ip_type = self.classify_ipv4(canonical)
         subnet = self.default_subnet_ipv4(canonical, ip_type)
         reverse_ptr = self.generate_reverse_ptr_ipv4(canonical)
 
         return {
-            'valid': True,
-            'normalized': canonical,
-            'version': '4',
-            'subnet_cidr': subnet,
-            'reverse_ptr': reverse_ptr,
-            'ip_type': ip_type,
-            'reason': 'ok'
+            "valid": True,
+            "normalized": canonical,
+            "version": "4",
+            "subnet_cidr": subnet,
+            "reverse_ptr": reverse_ptr,
+            "ip_type": ip_type,
+            "reason": "ok"
         }
 
     def validate_ipv6(self, ip_str):
         # Validate IPv6 address
-        if '%' in ip_str:
-            ip_part = ip_str.split('%')[0]
+        if "%" in ip_str:
+            ip_part = ip_str.split("%")[0]
         else:
             ip_part = ip_str
         
@@ -111,38 +111,43 @@ class DataRgent:
             import ipaddress
             ip_obj = ipaddress.IPv6Address(ip_part)
             return {
-                'valid': True,
-                'normalized': str(ip_obj),
-                'version': '6',
-                'subnet_cidr': f"{ip_obj}/64",
-                'reverse_ptr': '',
-                'reason': 'ok'
+                "valid": True,
+                "normalized": str(ip_obj),
+                "version": "6",
+                "subnet_cidr": f"{ip_obj}/64",
+                "reverse_ptr": "",
+                "reason": "ok"
             }
         except ValueError:
-            return {'valid': False, 'reason': 'invalid_ipv6'}
+            return {"valid": False, "reason": "invalid_ipv6"}
         
     def classify_ipv4_type(self, ip):
         # Simple classification for context; not required for validity
-        octets = list(map(int, ip.split('.')))
+        octets = list(map(int, ip.split(".")))
         if octets[0] == 10:
-            return 'private_rfc1918'
+            return "private_rfc1918"
         if octets[0] == 172 and 16 <= octets[1] <= 31:
-            return 'private_rfc1918'
+            return "private_rfc1918"
         if octets[0] == 192 and octets[1] == 168:
-            return 'private_rfc1918'
+            return "private_rfc1918"
         if octets[0] == 169 and octets[1] == 254:
-            return 'link_local_apipa'
+            return "link_local_apipa"
         if octets[0] == 127:
-            return 'loopback'
-        return 'public_or_other'
+            return "loopback"
+        return "public_or_other"
     
-def default_subnet(ip):
-    # Heuristic: /24 for RFC1918, else None (you can adapt this)
-    iptype = classify_ipv4_type(ip)
-    if iptype == "private_rfc1918":
-        parts = list(map(int, ip.split(".")))
-        return f"{parts[0]}.{parts[1]}.{parts[2]}.0/24"
-    return ""
+    def default_subnet_ipv4(self, ip: str, ip_type):
+        # Generate default subnet based on IP type.
+        if ip_type == "private_rfc1918":
+            parts = ip.split(".")
+            return f"{parts[0]}.{parts[1]}.{parts[2]}.0/24"
+        return ""
+    
+    def generate_reverse_ptr_ipv4(self, ip):
+        # Generate reverse DNS PTR record
+        parts = ip.split(".")
+        return f"{parts[3]}.{parts[2]}.{parts[1]}.{parts[0]}.in-addr.arpa"
+    
 
 def process(input_csv, out_csv, anomalies_json):
     anomalies = []
@@ -203,7 +208,7 @@ if __name__ == "__main__":
     anomalies_json = "anomalies.json"
 
     if not Path(input_csv).exists():
-        print(f"Error: Input file '{input_csv}' not found.")
+        print(f"Error: Input file "{input_csv}" not found.")
         sys.exit(1)
 
     dataRgent = DataRgent(ai=True)
