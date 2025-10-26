@@ -25,6 +25,7 @@ class DataRgent:
         self.anomalies = []
         self.ai = ai
         self.ai_client = None
+        self.prompt_counter = 0  # Counter for unique prompt files
 
         # Try to initialize Groq
         if self.ai and GROQ_AVAILABLE and GROQ_API_KEY:
@@ -44,6 +45,46 @@ class DataRgent:
             "ai_calls": 0,
             "anomalies_detected": 0
         }
+
+    def save_prompt_and_response(self, prompt: str, response: str, call_number: int):
+        # Save LLM prompt and response to prompts.md
+        filename = f"TEMPLATES/prompts.md"
+        filepath = Path(filename)
+        
+        content = f"""# LLM Prompt and Response - Call #{call_number}
+
+## Model Information
+- Model: llama-3.3-70b-versatile
+- Temperature: {LLM_TEMPERATURE}
+- Max Tokens: 2000
+
+---
+
+## Prompt
+
+```
+{prompt}
+```
+
+---
+
+## Response
+
+```
+{response}
+```
+
+---
+
+## Metadata
+- Call Number: {call_number}
+- Filename: {filename}
+"""
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print(f"  Saved prompt and response to: {filename}")
 
     # IP Validation
     def validate_ip(self, ip_str):
@@ -281,7 +322,10 @@ class DataRgent:
 
         try:
             response = self.call_groq(prompt)
-            print (f"AI Response: {response}")
+            
+            # Increment counter and save prompt/response
+            self.prompt_counter += 1
+            self.save_prompt_and_response(prompt, response, self.prompt_counter)
 
             # Parse JSON response
             json_match = re.search(r'```json\s*(\[.*?\])\s*```', response, re.DOTALL)
