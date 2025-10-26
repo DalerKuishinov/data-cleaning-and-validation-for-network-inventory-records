@@ -236,6 +236,21 @@ class DataRgent:
         return {'owner': name if name else owner, 'owner_email': email, 'owner_team': team}
     
     # Site Normalization
+
+    def normalize_site(self, site_str):
+        # Normalize site names
+        if not site_str or site_str.strip().upper() in ('N/A', 'NULL', ''):
+            return ''
+        
+        site = site_str.strip()
+        site_lower = site.lower()
+        site_clean = re.sub(r'\s+campus$', '', site_lower, flags=re.IGNORECASE)
+        site_clean = re.sub(r'\bbldg\b\.?', 'building', site_clean)
+        site_clean = re.sub(r'\bhq\b', 'hq', site_clean)
+        site_clean = site_clean.title()
+        site_clean = re.sub(r'[-_\s]+', '-', site_clean)
+        
+        return site_clean
     
     # Main Processing
     def process(self, input_csv, output_csv, anomalies_json):
@@ -284,15 +299,56 @@ class DataRgent:
 
     def process_record_deterministic(self, row):
         # Process a single record with deterministic rules
-        source_row_id = row.get('source_row_id', '') # Return empty string if can't find
+        source_row_id = row.get('source_row_id', '')
         steps = []
-
+        
         raw_ip = row.get('ip', '')
         ip_result = self.validate_ip(raw_ip)
         steps.append('ip_validation')
         if not ip_result['valid']:
             self.add_anomaly(source_row_id, 'ip', ip_result['reason'], raw_ip)
-
+        
+        mac_result = self.validate_mac(row.get('mac', ''))
+        steps.append('mac_validation')
+        if mac_result['valid']:
+            steps.append('mac_normalization')
+        elif row.get('mac', '').strip():
+            self.add_anomaly(source_row_id, 'mac', mac_result['reason'], row.get('mac', ''))
+        
+        hostname_result = self.validate_hostname(row.get('hostname', ''))
+        steps.append('hostname_validation')
+        if hostname_result['valid']:
+            steps.append('hostname_normalization')
+        elif row.get('hostname', '').strip():
+            self.add_anomaly(source_row_id, 'hostname', hostname_result['reason'], row.get('hostname', ''))
+        
+        fqdn_result = self.validate_fqdn(row.get('fqdn', ''), hostname_result['normalized'])
+        steps.append('fqdn_validation')
+        if fqdn_result['valid']:
+            steps.append('fqdn_normalization')
+        
+        owner_result = self.parse_owner(row.get('owner', ''))
+        steps.append('owner_parsing')
+        
+        device_type_raw = row.get('device_type', '').strip()
+        needs_ai = not device_type_raw or device_type_raw.lower() not in [
+            'server', 'workstation', 'printer', 'switch', 'router', 'iot'
+        ]
+        
+        if not needs_ai:
+            device_classification = self.classify_device_type_rule_based(row)
+            steps.append('device_type_rule_classification')
+        else:
+            device_classification = {
+                'device_type': device_type_raw,
+                'device_type_confidence': 'low',
+                'ai_reasoning': 'pending_ai_classification'
+            }
+            steps.append('device_type_pending_ai')
+        
+        site_normalized = self.normalize_site(row.get('site', ''))
+        steps.append('site_normalization')
+        
         return {
             'source_row_id': source_row_id,
             'ip': ip_result['normalized'],
@@ -300,7 +356,24 @@ class DataRgent:
             'ip_version': ip_result['version'],
             'subnet_cidr': ip_result['subnet_cidr'],
             'reverse_ptr': ip_result['reverse_ptr'],
+            'hostname': hostname_result['normalized'],
+            'hostname_valid': 'true' if hostname_result['valid'] else 'false',
+            'fqdn': fqdn_result['normalized'],
+            'fqdn_consistent': 'true' if fqdn_result['consistent'] else 'false',
+            'mac': mac_result['normalized'],
+            'mac_valid': 'true' if mac_result['valid'] else 'false',
+            'owner': owner_result['owner'],
+            'owner_email': owner_result['owner_email'],
+            'owner_team': owner_result['owner_team'],
+            'device_type': device_classification['device_type'],
+            'device_type_confidence': device_classification['device_type_confidence'],
+            'site': site_normalized,
+            'site_normalized': site_normalized,
+            'normalization_steps': '|'.join(steps),
+            'needs_ai_classification': needs_ai
         }
+    
+    
 
 
     # def classify_device_type_with_ai(self, records):
