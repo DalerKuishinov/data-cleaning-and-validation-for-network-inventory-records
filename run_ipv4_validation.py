@@ -2,6 +2,7 @@ import csv
 import json
 import re
 import sys
+import os
 from pathlib import Path
 from typing import Dict, List
 
@@ -15,7 +16,7 @@ except ImportError:
     pass
 
 # Configuration
-GROQ_API_KEY = 'temp'
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 LLM_TEMPERATURE = 0.1  # Low temperature for consistency
 BATCH_SIZE = 10  # Process ambiguous cases in batches
 
