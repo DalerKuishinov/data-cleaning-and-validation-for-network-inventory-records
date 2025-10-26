@@ -1,11 +1,23 @@
-#!/usr/bin/env python3
 import csv
 import json
 import re
 import sys
-import os
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
+
+# Try to import Groq client
+GROQ_AVAILABLE = False
+
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    pass
+
+# Configuration
+GROQ_API_KEY = 'temp'
+LLM_TEMPERATURE = 0.1  # Low temperature for consistency
+BATCH_SIZE = 10  # Process ambiguous cases in batches
 
 class DataRgent:
     def __init__(self, ai: bool = True):
@@ -13,7 +25,17 @@ class DataRgent:
         self.ai = ai
         self.ai_client = None
 
-        # Add AI initialization here later once deterministic stuff is figured out
+        # Try to initialize Groq
+        if self.ai and GROQ_AVAILABLE and GROQ_API_KEY:
+            try:
+                self.ai_client = Groq(api_key=GROQ_API_KEY)
+            except Exception as e:
+                print(f"Groq initialization failed: {e}")
+                self.ai = False
+        
+        if self.ai and not self.ai_client:
+            print("Groq API not configured. Using rule-based fallback")
+            self.ai = False
         
         # Statistics
         self.stats = {
@@ -89,7 +111,7 @@ class DataRgent:
             canonical_octets.append(str(value))
 
         canonical = ".".join(canonical_octets)
-        ip_type = self.classify_ipv4(canonical)
+        ip_type = self.classify_ipv4_type(canonical)
         subnet = self.default_subnet_ipv4(canonical, ip_type)
         reverse_ptr = self.generate_reverse_ptr_ipv4(canonical)
 
@@ -235,8 +257,122 @@ class DataRgent:
         
         return {'owner': name if name else owner, 'owner_email': email, 'owner_team': team}
     
-    # Site Normalization
+    # Groq stuff
+    def classify_device_type_with_ai(self, records):
+        # Use LLM to classify ambigious device types
+        if not self.ai or not records:
+            return [self.classify_device_type_rule_based(r) for r in records]
+        
+        self.stats['ai_calls'] += 1
 
+        # Preparing context
+        cases = []
+        for idx, record in enumerate(records):
+            cases.append({
+                'id': idx,
+                'hostname': record.get('hostname', ''),
+                'device_type_raw': record.get('device_type', ''),
+                'notes': record.get('notes', ''),
+                'ip': record.get('ip', '')
+            })
+
+        prompt = self.build_device_classification_prompt(cases)
+
+        try:
+            response = self.call_groq(prompt)
+
+            # Parse JSON response
+            json_match = re.search(r'```json\s*(\[.*?\])\s*```', response, re.DOTALL)
+            if json_match:
+                response = json_match.group(1)
+            
+            classifications = json.loads(response)
+
+            results = []
+            for record, classification in zip(records, classifications):
+                results.append({
+                    'device_type': classification['device_type'],
+                    'device_type_confidence': classification['confidence'],
+                    'ai_reasoning': classification.get('reasoning', '')
+                })
+
+            return results
+        except Exception as e:
+            print(f"AI classification failed: {e}")
+            return [self.classify_device_type_rule_based(r) for r in records]
+
+    def call_groq(self, prompt):
+        # Call Groq API
+        response = self.ai_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=LLM_TEMPERATURE,
+            max_tokens=2000
+        )
+        return response.choices[0].message.content
+
+    def build_device_classification_prompt(self, cases):
+        # Build prompt for device type classification
+        prompt = f"""You are a network inventory data classifier. Classify each device into one of these categories:
+- server
+- workstation
+- printer
+- switch
+- router
+- iot
+- unknown
+
+For each device, provide:
+1. device_type: one of the categories above
+2. confidence: "high", "medium", or "low"
+3. reasoning: brief explanation (1 sentence)
+
+Input records:
+{json.dumps(cases, indent=2)}
+
+Return ONLY a JSON array with this structure:
+[
+  {{"id": 0, "device_type": "server", "confidence": "high", "reasoning": "hostname pattern srv- indicates server"}},
+  ...
+]
+
+Rules:
+- Use hostname patterns (srv-, host-, gw-, sw-, etc.)
+- Consider device_type_raw if present but verify it makes sense
+- Check notes for clues
+- IP type can help (servers often have static IPs)
+- Be conservative: use "unknown" if uncertain"""
+        
+        return prompt
+
+    def classify_device_type_rule_based(self, record: Dict) -> Dict:
+        # Rule-based device type classification as fallback if LLM calls fail
+        hostname = record.get('hostname', '').lower()
+        device_type_raw = record.get('device_type', '').lower()
+        notes = record.get('notes', '').lower()
+        
+        valid_types = ['server', 'workstation', 'printer', 'switch', 'router', 'iot']
+        if device_type_raw in valid_types:
+            return {'device_type': device_type_raw, 'device_type_confidence': 'high', 'ai_reasoning': 'explicit_type_provided'}
+        
+        patterns = {
+            'server': ['srv', 'host', 'db', 'web', 'app'],
+            'switch': ['sw', 'switch'],
+            'router': ['rtr', 'router', 'gw', 'gateway'],
+            'printer': ['printer', 'print'],
+            'iot': ['iot', 'cam', 'sensor']
+        }
+        
+        for device_type, keywords in patterns.items():
+            if any(kw in hostname for kw in keywords):
+                return {'device_type': device_type, 'device_type_confidence': 'medium', 'ai_reasoning': f'hostname_pattern_{device_type}'}
+        
+        if 'camera' in notes or 'poe' in notes:
+            return {'device_type': 'iot', 'device_type_confidence': 'medium', 'ai_reasoning': 'notes_indicate_iot'}
+        
+        return {'device_type': 'unknown', 'device_type_confidence': 'low', 'ai_reasoning': 'insufficient_information'}
+    
+    # Site Normalization
     def normalize_site(self, site_str):
         # Normalize site names
         if not site_str or site_str.strip().upper() in ('N/A', 'NULL', ''):

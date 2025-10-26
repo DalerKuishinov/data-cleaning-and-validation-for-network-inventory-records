@@ -9,7 +9,8 @@
       }
     ],
     "recommended_actions": [
-      "Correct IP or mark record for review"
+      "Correct IP octet values (0-255)",
+      "Check source data"
     ]
   },
   {
@@ -17,12 +18,13 @@
     "issues": [
       {
         "field": "ip",
-        "type": "wrong_part_count",
+        "type": "wrong_octet_count",
         "value": "10.0.1"
       }
     ],
     "recommended_actions": [
-      "Correct IP or mark record for review"
+      "Correct IP address to have exactly 4 octets",
+      "Verify source data"
     ]
   },
   {
@@ -30,25 +32,13 @@
     "issues": [
       {
         "field": "ip",
-        "type": "wrong_part_count",
+        "type": "wrong_octet_count",
         "value": "10.0.1.1.2"
       }
     ],
     "recommended_actions": [
-      "Correct IP or mark record for review"
-    ]
-  },
-  {
-    "source_row_id": "5",
-    "issues": [
-      {
-        "field": "ip",
-        "type": "ipv6_or_non_ipv4",
-        "value": "fe80::1%eth0"
-      }
-    ],
-    "recommended_actions": [
-      "Correct IP or mark record for review"
+      "Correct IP address to have exactly 4 octets",
+      "Verify source data"
     ]
   },
   {
@@ -56,12 +46,13 @@
     "issues": [
       {
         "field": "ip",
-        "type": "non_numeric_or_negative",
+        "type": "non_numeric_octet",
         "value": "abc.def.ghi.jkl"
       }
     ],
     "recommended_actions": [
-      "Correct IP or mark record for review"
+      "Remove non-numeric characters from IP address",
+      "Check source data"
     ]
   },
   {
@@ -69,12 +60,13 @@
     "issues": [
       {
         "field": "ip",
-        "type": "non_numeric_or_negative",
+        "type": "octet_out_of_range",
         "value": "192.168.1.-1"
       }
     ],
     "recommended_actions": [
-      "Correct IP or mark record for review"
+      "Correct IP octet values (0-255)",
+      "Check source data"
     ]
   },
   {
@@ -82,12 +74,13 @@
     "issues": [
       {
         "field": "ip",
-        "type": "wrong_part_count",
+        "type": "missing",
         "value": "N/A"
       }
     ],
     "recommended_actions": [
-      "Correct IP or mark record for review"
+      "Populate IP address field",
+      "Mark record for manual review"
     ]
   }
 ]
