@@ -1,25 +1,23 @@
-# approach.md (Template)
-Explain your pipeline (rules → LLM), constraints, and how to reproduce end‑to‑end.
-
+# approach.md
 PIPELINE: 
     Input (inventory_raw.csv)
-        ↓
+        →
     [1] Deterministic Validation
         - IP address validation (IPv4/IPv6)
         - MAC address normalization
         - Hostname/FQDN validation
         - Owner field parsing
         - Site name normalization
-        ↓
+        →
     [2] Ambiguity Detection
         - Flag records needing AI judgment
         - Batch ambiguous cases
-        ↓
+        →
     [3] AI Classification
         - Device type inference
         - Confidence scoring
         - Reasoning capture
-        ↓
+        →
     [4] Output Generation
         - inventory_clean.csv (normalized records)
         - anomalies.json (validation issues)
