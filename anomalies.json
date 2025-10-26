@@ -1,0 +1,86 @@
+[
+  {
+    "source_row_id": "2",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "octet_out_of_range",
+        "value": "10.0.1.300"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP octet values (0-255)",
+      "Check source data"
+    ]
+  },
+  {
+    "source_row_id": "3",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "wrong_octet_count",
+        "value": "10.0.1"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP address to have exactly 4 octets",
+      "Verify source data"
+    ]
+  },
+  {
+    "source_row_id": "4",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "wrong_octet_count",
+        "value": "10.0.1.1.2"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP address to have exactly 4 octets",
+      "Verify source data"
+    ]
+  },
+  {
+    "source_row_id": "9",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "non_numeric_octet",
+        "value": "abc.def.ghi.jkl"
+      }
+    ],
+    "recommended_actions": [
+      "Remove non-numeric characters from IP address",
+      "Check source data"
+    ]
+  },
+  {
+    "source_row_id": "10",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "octet_out_of_range",
+        "value": "192.168.1.-1"
+      }
+    ],
+    "recommended_actions": [
+      "Correct IP octet values (0-255)",
+      "Check source data"
+    ]
+  },
+  {
+    "source_row_id": "15",
+    "issues": [
+      {
+        "field": "ip",
+        "type": "missing",
+        "value": "N/A"
+      }
+    ],
+    "recommended_actions": [
+      "Populate IP address field",
+      "Mark record for manual review"
+    ]
+  }
+]

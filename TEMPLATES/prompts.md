@@ -1,3 +1,122 @@
-# prompts.md (Template)
+# LLM Prompt and Response - Call #1
 
-Document each LLM interaction: prompt, constraint, expected output format, and 1–2 lines of rationale.
+## Model Information
+- Model: llama-3.3-70b-versatile
+- Temperature: 0.1
+- Max Tokens: 2000
+
+---
+
+## Prompt
+
+```
+You are a network inventory data classifier. Classify each device into one of these categories:
+- server
+- workstation
+- printer
+- switch
+- router
+- iot
+- unknown
+
+For each device, provide:
+1. device_type: one of the categories above
+2. confidence: "high", "medium", or "low"
+3. reasoning: brief explanation (1 sentence)
+
+Input records:
+[
+  {
+    "id": 0,
+    "hostname": "host-02",
+    "device_type_raw": "",
+    "notes": "edge gw?",
+    "ip": "10.0.1.300"
+  },
+  {
+    "id": 1,
+    "hostname": "local-test",
+    "device_type_raw": "",
+    "notes": "",
+    "ip": "127.0.0.1"
+  },
+  {
+    "id": 2,
+    "hostname": "host-apipa",
+    "device_type_raw": "",
+    "notes": "",
+    "ip": "169.254.10.20"
+  },
+  {
+    "id": 3,
+    "hostname": "badhost",
+    "device_type_raw": "",
+    "notes": "",
+    "ip": "abc.def.ghi.jkl"
+  },
+  {
+    "id": 4,
+    "hostname": "neg",
+    "device_type_raw": "",
+    "notes": "",
+    "ip": "192.168.1.-1"
+  },
+  {
+    "id": 5,
+    "hostname": "bcast",
+    "device_type_raw": "",
+    "notes": "Potential broadcast",
+    "ip": "192.168.1.255"
+  },
+  {
+    "id": 6,
+    "hostname": "netid",
+    "device_type_raw": "",
+    "notes": "Potential network id",
+    "ip": "192.168.1.0"
+  },
+  {
+    "id": 7,
+    "hostname": "missing-ip",
+    "device_type_raw": "",
+    "notes": "",
+    "ip": ""
+  }
+]
+
+Return ONLY a JSON array with this structure:
+[
+  {"id": 0, "device_type": "server", "confidence": "high", "reasoning": "hostname pattern srv- indicates server"},
+  ...
+]
+
+Rules:
+- Use hostname patterns (srv-, host-, gw-, sw-, etc.)
+- Consider device_type_raw if present but verify it makes sense
+- Check notes for clues
+- IP type can help (servers often have static IPs)
+- Be conservative: use "unknown" if uncertain
+```
+
+---
+
+## Response
+
+```
+[
+  {"id": 0, "device_type": "router", "confidence": "medium", "reasoning": "notes mention edge gw which could indicate a gateway device"},
+  {"id": 1, "device_type": "workstation", "confidence": "high", "reasoning": "hostname local-test and ip 127.0.0.1 indicate a local test workstation"},
+  {"id": 2, "device_type": "workstation", "confidence": "medium", "reasoning": "hostname host-apipa and ip 169.254.10.20 indicate a workstation with a self-assigned ip"},
+  {"id": 3, "device_type": "unknown", "confidence": "low", "reasoning": "ip address abc.def.ghi.jkl is invalid and does not provide any clues"},
+  {"id": 4, "device_type": "unknown", "confidence": "low", "reasoning": "ip address 192.168.1.-1 is invalid and does not provide any clues"},
+  {"id": 5, "device_type": "unknown", "confidence": "low", "reasoning": "ip address 192.168.1.255 is a broadcast address and does not indicate a specific device type"},
+  {"id": 6, "device_type": "unknown", "confidence": "low", "reasoning": "ip address 192.168.1.0 is a network id and does not indicate a specific device type"},
+  {"id": 7, "device_type": "unknown", "confidence": "low", "reasoning": "missing ip address does not provide any clues"}
+]
+```
+
+---
+
+## Metadata
+- Call Number: 1
+- Filename: TEMPLATES/prompts.md
