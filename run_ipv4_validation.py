@@ -281,6 +281,7 @@ class DataRgent:
 
         try:
             response = self.call_groq(prompt)
+            print (f"AI Response: {response}")
 
             # Parse JSON response
             json_match = re.search(r'```json\s*(\[.*?\])\s*```', response, re.DOTALL)
