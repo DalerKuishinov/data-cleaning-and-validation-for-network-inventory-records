@@ -9,7 +9,7 @@ HERE = Path(__file__).parent
 
 def main():
     # Step 1: IPv4 normalization (example starter)
-    subprocess.check_call([sys.executable, str(HERE / "run_ipv4_validation.py"), str(HERE / "inventory_raw.csv")])
+    subprocess.check_call([sys.executable, str(HERE / "datargent.py"), str(HERE / "inventory_raw.csv")])
 
 if __name__ == "__main__":
     main()

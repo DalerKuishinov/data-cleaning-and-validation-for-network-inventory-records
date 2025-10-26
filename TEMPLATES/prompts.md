@@ -103,16 +103,18 @@ Rules:
 ## Response
 
 ```
+```json
 [
-  {"id": 0, "device_type": "router", "confidence": "medium", "reasoning": "notes mention edge gw which could indicate a gateway device"},
-  {"id": 1, "device_type": "workstation", "confidence": "high", "reasoning": "hostname local-test and ip 127.0.0.1 indicate a local test workstation"},
-  {"id": 2, "device_type": "workstation", "confidence": "medium", "reasoning": "hostname host-apipa and ip 169.254.10.20 indicate a workstation with a self-assigned ip"},
-  {"id": 3, "device_type": "unknown", "confidence": "low", "reasoning": "ip address abc.def.ghi.jkl is invalid and does not provide any clues"},
-  {"id": 4, "device_type": "unknown", "confidence": "low", "reasoning": "ip address 192.168.1.-1 is invalid and does not provide any clues"},
-  {"id": 5, "device_type": "unknown", "confidence": "low", "reasoning": "ip address 192.168.1.255 is a broadcast address and does not indicate a specific device type"},
-  {"id": 6, "device_type": "unknown", "confidence": "low", "reasoning": "ip address 192.168.1.0 is a network id and does not indicate a specific device type"},
-  {"id": 7, "device_type": "unknown", "confidence": "low", "reasoning": "missing ip address does not provide any clues"}
+  {"id": 0, "device_type": "router", "confidence": "medium", "reasoning": "notes mention edge gw which could indicate a router"},
+  {"id": 1, "device_type": "workstation", "confidence": "high", "reasoning": "localhost ip 127.0.0.1 typically indicates a workstation"},
+  {"id": 2, "device_type": "workstation", "confidence": "medium", "reasoning": "apiPA ip address often assigned to workstations"},
+  {"id": 3, "device_type": "unknown", "confidence": "low", "reasoning": "invalid ip address makes it impossible to determine device type"},
+  {"id": 4, "device_type": "unknown", "confidence": "low", "reasoning": "invalid ip address makes it impossible to determine device type"},
+  {"id": 5, "device_type": "unknown", "confidence": "low", "reasoning": "broadcast ip address does not indicate a specific device type"},
+  {"id": 6, "device_type": "unknown", "confidence": "low", "reasoning": "network id ip address does not indicate a specific device type"},
+  {"id": 7, "device_type": "unknown", "confidence": "low", "reasoning": "missing ip address makes it impossible to determine device type"}
 ]
+```
 ```
 
 ---
