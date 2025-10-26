@@ -288,7 +288,7 @@ class DataRgent:
                 processed_records[idx]['device_type'] = classification['device_type']
                 processed_records[idx]['device_type_confidence'] = classification['device_type_confidence']
         
-        self._write_output(processed_records, output_csv, anomalies_json)
+        self.write_output(processed_records, output_csv, anomalies_json)
         
         print(f"Processing complete!")
         print(f"Total records: {self.stats['total_records']}")
@@ -373,12 +373,64 @@ class DataRgent:
             'needs_ai_classification': needs_ai
         }
     
-    
+    def add_anomaly(self, source_row_id, field, issue_type, value):
+        # Add an anomaly
+        self.stats['anomalies_detected'] += 1
 
+        existing = next((a for a in self.anomalies if a['source_row_id'] == source_row_id), None) # CHeck if source row exists already
 
-    # def classify_device_type_with_ai(self, records):
+        if existing:
+            existing['issues'].append({'field': field, 'type': issue_type, 'value': value})
+        else:
+            self.anomalies.append({
+                'source_row_id': source_row_id,
+                'issues': [{'field': field, 'type': issue_type, 'value': value}],
+                'recommended_actions': self.get_recommended_actions(field, issue_type)
+            })
 
+    def get_recommended_actions(self, field: str, issue_type: str) -> List[str]:
+        # Get recommended actions for an anomaly
+        actions_map = {
+            'ip': {
+                'missing': ['Populate IP address field', 'Mark record for manual review'],
+                'invalid_format': ['Correct IP address format', 'Verify with network team'],
+                'octet_out_of_range': ['Correct IP octet values (0-255)', 'Check source data'],
+                'wrong_octet_count': ['Correct IP address to have exactly 4 octets', 'Verify source data'],
+                'non_numeric_octet': ['Remove non-numeric characters from IP address', 'Check source data'],
+                'ipv6_format': ['Convert to IPv4 or use proper IPv6 validation', 'Verify IP version'],
+            },
+            'mac': {
+                'invalid_format': ['Correct MAC address format (12 hex digits)', 'Verify with asset management'],
+            },
+            'hostname': {
+                'invalid_characters': ['Remove invalid characters from hostname', 'Follow RFC 1123 naming rules'],
+                'too_long': ['Shorten hostname to 253 characters or less'],
+            }
+        }
         
+        field_actions = actions_map.get(field, {})
+        return field_actions.get(issue_type, [f'Review and correct {field} field value'])
+    
+    def write_output(self, records: List[Dict], output_csv: str, anomalies_json: str):
+        """Write cleaned data and anomalies to files."""
+        fieldnames = [
+            'ip', 'ip_valid', 'ip_version', 'subnet_cidr', 'reverse_ptr',
+            'hostname', 'hostname_valid',
+            'fqdn', 'fqdn_consistent',
+            'mac', 'mac_valid',
+            'owner', 'owner_email', 'owner_team',
+            'device_type', 'device_type_confidence',
+            'site', 'site_normalized',
+            'source_row_id', 'normalization_steps'
+        ]
+        
+        with open(output_csv, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+            writer.writeheader()
+            writer.writerows(records)
+        
+        with open(anomalies_json, 'w') as f:
+            json.dump(self.anomalies, f, indent=2)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
